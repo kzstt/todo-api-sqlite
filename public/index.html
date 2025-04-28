@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Todo App</title>
+</head>
+<body>
+  <h1>Todo List</h1>
+
+  <form id="todoForm">
+    <input type="text" id="name" placeholder="Todo name" required>
+    <input type="text" id="priority" placeholder="Priority (low/medium/high)">
+    <label>
+      Complete?
+      <input type="checkbox" id="isComplete">
+    </label>
+    <label>
+      Fun?
+      <input type="checkbox" id="isFun">
+    </label>
+    <button type="submit">Add Todo</button>
+  </form>
+
+  <ul id="todoList"></ul>
+
+  <script>
+    const form = document.getElementById('todoForm');
+    const todoList = document.getElementById('todoList');
+
+    function loadTodos() {
+      fetch('/todos')
+        .then(res => res.json())
+        .then(todos => {
+          todoList.innerHTML = '';
+          todos.forEach(todo => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <strong>${todo.name}</strong> [${todo.priority}] 
+              - Complete: ${todo.isComplete ? '✅' : '❌'} 
+              - Fun: ${todo.isFun ? '🎉' : '😐'}
+              <button onclick="deleteTodo(${todo.id})">Delete</button>
+            `;
+            todoList.appendChild(li);
+          });
+        });
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = {
+        name: document.getElementById('name').value,
+        priority: document.getElementById('priority').value,
+        isComplete: document.getElementById('isComplete').checked,
+        isFun: document.getElementById('isFun').checked,
+      };
+      fetch('/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(() => {
+        form.reset();
+        loadTodos();
+      });
+    });
+
+    function deleteTodo(id) {
+      fetch(`/todos/${id}`, { method: 'DELETE' })
+        .then(() => loadTodos());
+    }
+
+    loadTodos();
+  </script>
+</body>
+</html>
